@@ -1,6 +1,28 @@
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
+
+app.Use(async (context, next) => {
+    Console.WriteLine($"[LOG] {context.Request.Method} {context.Request.Path}");
+    await next(context);
+    Console.WriteLine($"[LOG] ответ отправлен: {context.Response.StatusCode}");
+});
+
+app.Use(async (context, next) => {
+    context.Response.Headers.Append("X-Powered-By", "ASP.NET Core Lab27");
+    await next(context);
+});
+
+app.Use(async (context, next) => {
+    var key = context.Request.Query["key"];
+    if (key != "secret") {
+        context.Response.StatusCode = 401;
+        await context.Response.WriteAsync("Unauthorized");
+        return;
+    }
+    await next(context);
+});
+
 app.MapGet("/", () => "добро пожаловать на сервер!");
 app.MapGet("/about", () => "это мой первый ASP.NET Core сервер");
 app.MapGet("/time", () => $"время на сервере: {DateTime.Now}");
